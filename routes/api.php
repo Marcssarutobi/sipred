@@ -41,6 +41,6 @@ Route::middleware('auth:sanctum')->group(function(){
 
     // Approvisionnements
     Route::apiResource('aprovisionnements', AprovisionnementController::class)->except(['update']);
-    Route::get('aprovisionnement/status', [AprovisionnementController::class, 'livrer']);
+    Route::post('aprovisionnement/{aprovisionnement}/livrer', [AprovisionnementController::class, 'livrer']);
 
 });

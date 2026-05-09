@@ -27,6 +27,14 @@ const routes = [
                 path:'vente',
                 component: () =>import('@/components/adminPage/pages/vente.vue')
             },
+            {
+                path:'fournisseur',
+                component: () =>import('@/components/adminPage/pages/fournisseur.vue')
+            },
+            {
+                path:'approvisionnement',
+                component: () =>import('@/components/adminPage/pages/approvisionnement.vue')
+            },
         ]
     },
     {

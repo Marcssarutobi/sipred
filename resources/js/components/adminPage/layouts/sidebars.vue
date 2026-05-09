@@ -42,6 +42,18 @@
                         <span>Vente</span>
                     </RouterLink>
                 </li>
+                <li>
+                    <RouterLink to="/fournisseur">
+                        <iconify-icon icon="tabler:truck-delivery" class="menu-icon"></iconify-icon>
+                        <span>Fournisseur</span>
+                    </RouterLink>
+                </li>
+                <li>
+                    <RouterLink to="/approvisionnement">
+                        <iconify-icon icon="tabler:package" class="menu-icon"></iconify-icon>
+                        <span>Approvisionnement</span>
+                    </RouterLink>
+                </li>
 
             </ul>
         </div>
