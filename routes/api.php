@@ -4,6 +4,7 @@ use App\Http\Controllers\AprovisionnementController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\FournisseurController;
 use App\Http\Controllers\MouvementController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VenteController;
@@ -42,5 +43,12 @@ Route::middleware('auth:sanctum')->group(function(){
     // Approvisionnements
     Route::apiResource('aprovisionnements', AprovisionnementController::class)->except(['update']);
     Route::post('aprovisionnement/{aprovisionnement}/livrer', [AprovisionnementController::class, 'livrer']);
+
+    Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount']);
+    Route::patch('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
+    Route::patch('/notifications/read-all', [NotificationController::class, 'markAllAsRead']);
+    Route::delete('/notifications/{id}', [NotificationController::class, 'destroy']);
+    Route::delete('/notifications', [NotificationController::class, 'destroyAll']);
 
 });
