@@ -1,5 +1,6 @@
 import './bootstrap';
 import { createApp, nextTick } from 'vue';
+import VueApexCharts from 'vue3-apexcharts';
 import App from './components/App.vue';
 import router from './components/router';
 
@@ -7,9 +8,6 @@ const templateScripts = [
     // Core
     '/assets/js/lib/jquery-3.7.1.min.js',
     '/assets/js/lib/bootstrap.bundle.min.js',
-  
-    // Charts
-    '/assets/js/lib/apexcharts.min.js',
   
     // DataTables
     '/assets/js/lib/dataTables.min.js',
@@ -43,7 +41,6 @@ const templateScripts = [
     '/assets/js/app.js',
   
     // Dashboard charts
-    '/assets/js/homeOneChart.js',
   ];
   
   // Charge un script une seule fois
@@ -131,8 +128,6 @@ const templateScripts = [
     }
   
     // Charts homepage — réinitialise si la fonction est exposée globalement
-    if (window.initHomeOneChart) initHomeOneChart();
-  
     // Script principal du template
     if (window.initTemplate) initTemplate();
   }
@@ -151,4 +146,5 @@ const templateScripts = [
 
 const app = createApp(App);
 app.use(router);
+app.use(VueApexCharts);
 app.mount('#app');

@@ -374,6 +374,50 @@
         const hasError = Object.values(isEmpty.value).some(v => v === true)
         if (hasError) return
 
+        // ── Vérification seuil alerte (sortie uniquement) ──────────────────
+        if (data.value.type === 'sortie') {
+            const produit = products.value.find(p => p.id === data.value.product_id)
+
+            if (produit) {
+                const stockApres = produit.quantite - data.value.quantite
+
+                // Stock déjà à 0 → refus immédiat
+                if (produit.quantite <= 0) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Stock épuisé',
+                        text: `Le stock de "${produit.nom}" est déjà à 0. La sortie est impossible.`,
+                        confirmButtonColor: '#dc3545',
+                    })
+                    return
+                }
+
+                // Stock actuel ou stock après déjà sous le seuil → confirmation
+                if (produit.quantite <= produit.seuil_alerte || stockApres <= produit.seuil_alerte) {
+                    const result = await Swal.fire({
+                        icon: 'warning',
+                        title: '⚠️ Seuil d\'alerte atteint',
+                        html: `
+                            Le stock de <strong>${produit.nom}</strong> est actuellement de
+                            <strong>${produit.quantite}</strong> unité(s).<br><br>
+                            Après cette sortie il restera <strong>${stockApres}</strong> unité(s),
+                            en dessous du seuil d'alerte fixé à <strong>${produit.seuil_alerte}</strong>.<br><br>
+                            Voulez-vous vraiment continuer ?
+                        `,
+                        showCancelButton: true,
+                        confirmButtonText: 'Oui, continuer',
+                        cancelButtonText: 'Annuler',
+                        confirmButtonColor: '#dc3545',
+                        cancelButtonColor: '#6c757d',
+                    })
+
+                    // L'utilisateur a annulé
+                    if (!result.isConfirmed) return
+                }
+            }
+        }
+        // ──────────────────────────────────────────────────────────────────
+
         isLoader.value = true
 
         await postData('/mouvements', data.value).then(res => {
@@ -386,11 +430,10 @@
                     timer: 1800
                 })
                 AllMouvementsFunction()
-                AllProductsFunction() // rafraîchir le stock affiché
+                AllProductsFunction()
                 addmodal.hide()
             }
         }).catch(err => {
-            // Gestion erreur stock insuffisant (422)
             if (err.response?.status === 422) {
                 Swal.fire({
                     icon: 'error',

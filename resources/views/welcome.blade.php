@@ -56,8 +56,6 @@
         <script src="{{ asset('assets/js/lib/jquery-3.7.1.min.js') }}"></script>
         <!-- Bootstrap js -->
         <script src="{{ asset('assets/js/lib/bootstrap.bundle.min.js') }}"></script>
-        <!-- Apex Chart js -->
-        <script src="{{ asset('assets/js/lib/apexcharts.min.js') }}"></script>
         <!-- Data Table js -->
         <script src="{{ asset('assets/js/lib/dataTables.min.js') }}"></script>
         <!-- Iconify Font js -->
@@ -80,8 +78,6 @@
 
         <!-- main js -->
         <script src="{{ asset('assets/js/app.js') }}"></script>
-
-        <script src="{{ asset('assets/js/homeOneChart.js') }}"></script>
 
         @vite(['resources/js/app.js'])
 

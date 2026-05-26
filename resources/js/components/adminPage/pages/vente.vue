@@ -606,18 +606,83 @@
 
         if (!data.value.date)         isEmpty.value.date         = true
         if (!data.value.montant_paye && data.value.montant_paye !== 0)
-                                      isEmpty.value.montant_paye = true
+                                    isEmpty.value.montant_paye = true
         if (data.value.items.length === 0) isEmpty.value.items   = true
 
         const hasError = Object.values(isEmpty.value).some(v => v === true)
         if (hasError) return
 
+        // ── Vérification seuil alerte sur chaque article ───────────────────
+        const produitsSousSeuilLines = []
+
+        for (const item of data.value.items) {
+            const produit = products.value.find(p => p.id === item.product_id)
+            if (!produit) continue
+
+            // Stock à 0 → refus immédiat
+            if (produit.quantite <= 0) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Stock épuisé',
+                    html: `Le produit <strong>${produit.nom}</strong> est en rupture de stock (0 unité).<br>
+                        Veuillez le retirer du panier.`,
+                    confirmButtonColor: '#dc3545',
+                })
+                return
+            }
+
+            // Calculer le stock après vente
+            const stockApres = produit.quantite - item.quantite
+            if (stockApres <= produit.seuil_alerte) {
+                produitsSousSeuilLines.push(
+                    `<tr>
+                        <td class="text-start"><strong>${produit.nom}</strong></td>
+                        <td>${produit.quantite}</td>
+                        <td>${stockApres < 0 ? `<span style="color:#dc3545">${stockApres}</span>` : stockApres}</td>
+                        <td>${produit.seuil_alerte}</td>
+                    </tr>`
+                )
+            }
+        }
+
+        if (produitsSousSeuilLines.length > 0) {
+            const result = await Swal.fire({
+                icon: 'warning',
+                title: '⚠️ Seuil d\'alerte atteint',
+                html: `
+                    Après cette vente, les produits suivants passeront sous leur seuil d'alerte :<br><br>
+                    <table class="table table-sm table-bordered" style="font-size:13px;">
+                        <thead style="background:#fff3cd;">
+                            <tr>
+                                <th class="text-start">Produit</th>
+                                <th>Stock actuel</th>
+                                <th>Stock après</th>
+                                <th>Seuil</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${produitsSousSeuilLines.join('')}
+                        </tbody>
+                    </table>
+                    Voulez-vous vraiment continuer ?
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Oui, valider la vente',
+                cancelButtonText: 'Annuler',
+                confirmButtonColor: '#002D5D',
+                cancelButtonColor: '#6c757d',
+                width: '550px',
+            })
+
+            if (!result.isConfirmed) return
+        }
+        // ──────────────────────────────────────────────────────────────────
+
         isLoader.value = true
 
-        // Formater les items pour l'API
         const payload = {
-            date:          data.value.date,
-            montant_paye:  data.value.montant_paye,
+            date:         data.value.date,
+            montant_paye: data.value.montant_paye,
             items: data.value.items.map(i => ({
                 product_id:    i.product_id,
                 quantite:      i.quantite,
@@ -631,7 +696,7 @@
                     icon: 'success',
                     title: 'Vente enregistrée !',
                     html: `Référence : <strong>${res.data.reference}</strong><br>
-                           Total : <strong>${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF' }).format(res.data.montant_total)}</strong>`,
+                        Total : <strong>${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF' }).format(res.data.montant_total)}</strong>`,
                     showConfirmButton: false,
                     timer: 2500
                 })
@@ -642,17 +707,9 @@
             }
         }).catch(err => {
             if (err.response?.status === 422) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Stock insuffisant',
-                    text: err.response.data.message,
-                })
+                Swal.fire({ icon: 'error', title: 'Stock insuffisant', text: err.response.data.message })
             } else {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Erreur',
-                    text: err.response?.data?.message || 'Une erreur est survenue.',
-                })
+                Swal.fire({ icon: 'error', title: 'Erreur', text: err.response?.data?.message || 'Une erreur est survenue.' })
             }
         })
 

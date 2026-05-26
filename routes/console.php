@@ -11,4 +11,5 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::job(new VerifierStockAlerteJob())->everyMinute()->withoutOverlapping();
-Schedule::job(new AnalyseProduitsPlusVendusJob())->weeklyOn(1, '02:00')->withoutOverlapping();
+Schedule::job(new AnalyseProduitsPlusVendusJob())->everyMinute()->withoutOverlapping();
+//Schedule::job(new AnalyseProduitsPlusVendusJob())->weeklyOn(1, '02:00')->withoutOverlapping();
