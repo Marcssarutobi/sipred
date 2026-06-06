@@ -13,26 +13,32 @@ const routes = [
             },
             {
                 path:'category',
+                meta:{roles: ['admin', 'gerant']},
                 component: () =>import('@/components/adminPage/pages/category.vue')
             },
             {
                 path:'product',
+                meta:{roles: ['admin', 'gerant', 'magasinier']},
                 component: () =>import('@/components/adminPage/pages/product.vue')
             },
             {
                 path:'mouvement',
+                meta:{roles: ['admin', 'magasinier']},
                 component: () =>import('@/components/adminPage/pages/mouvement.vue')
             },
             {
                 path:'vente',
+                meta:{roles: ['admin', 'gerant']},
                 component: () =>import('@/components/adminPage/pages/vente.vue')
             },
             {
                 path:'fournisseur',
+                meta:{roles: ['admin', 'gerant']},
                 component: () =>import('@/components/adminPage/pages/fournisseur.vue')
             },
             {
                 path:'approvisionnement',
+                meta:{roles: ['admin', 'gerant', 'magasinier']},
                 component: () =>import('@/components/adminPage/pages/approvisionnement.vue')
             },
         ]
@@ -80,7 +86,16 @@ router.beforeEach(async (to, from, next) => {
         const token = localStorage.getItem("token");
 
         if (auth && token) {
-          next();
+
+            const role = auth.user?.role;
+
+            // Vérifier si la route est restreinte à certains rôles
+            if (to.meta.roles && !to.meta.roles.includes(role)) {
+                next('/');  // Redirige vers l'accueil si rôle non autorisé
+            } else {
+                next();
+            }
+
         } else {
           localStorage.setItem('redirectAfterLogin', to.fullPath);
           window.location.href = '/login';

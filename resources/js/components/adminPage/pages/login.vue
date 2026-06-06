@@ -95,7 +95,7 @@
                         localStorage.removeItem('redirectAfterLogin');
                     } else {
                         //router.push('/');
-                        window.location.href = "/admins"
+                        window.location.href = "/"
                     }
                 }
             }).catch(error => {
