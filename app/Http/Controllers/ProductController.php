@@ -17,6 +17,10 @@ class ProductController extends Controller
 
     public function store(Request $request)
     {
+        if (auth()->user()?->isMagasinier()) {
+            return response()->json(['message' => 'Accès refusé.'], 403);
+        }
+
         $validated = $request->validate([
             'code_barre'      => 'required|string|unique:products,code_barre',
             'nom'             => 'required|string|max:255',
@@ -50,6 +54,10 @@ class ProductController extends Controller
 
     public function update(Request $request, Product $product)
     {
+        if (auth()->user()?->isMagasinier()) {
+            return response()->json(['message' => 'Accès refusé.'], 403);
+        }
+
         $validated = $request->validate([
             'code_barre'      => 'required|string|unique:products,code_barre,' . $product->id,
             'nom'             => 'required|string|max:255',
@@ -78,6 +86,10 @@ class ProductController extends Controller
 
     public function destroy(Product $product)
     {
+        if (auth()->user()?->isMagasinier() || auth()->user()?->isGerant()) {
+            return response()->json(['message' => 'Accès refusé.'], 403);
+        }
+
         if ($product->image) {
             Storage::disk('public')->delete($product->image);
         }

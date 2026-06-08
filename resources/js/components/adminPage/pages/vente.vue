@@ -405,9 +405,16 @@
     import DataTable from '../DataTable/Datatable.vue';
     import { onMounted, ref, computed } from 'vue';
     import { postData, getData, getSingleData, deleteData } from '../../plugins/api';
+    import { isAuthenticated } from '../../router';
 
     let addmodal;
     let detailModal;
+    const currentUser = ref(null)
+    const isMagasinier = computed(() => currentUser.value?.role === 'magasinier')
+
+    async function loadCurrentUser() {
+      currentUser.value = await isAuthenticated()
+    }
 
     // ─── State ───────────────────────────────────────────────────────────────────
 
@@ -565,14 +572,23 @@
         },
         {
             title: 'Action', data: null,
-            render: (data, type, row) => `
-                <a class="btn btn-info btn-sm me-1 text-white" href="#" onclick="ShowDetailVente(${row.id})">
-                    <i class="fas fa-eye"></i>
-                </a>
-                <a class="btn btn-danger btn-sm" href="#" onclick="DeleteVenteFunction(${row.id})">
-                    <i class="fas fa-trash"></i>
-                </a>
-            `
+            render: (data, type, row) => {
+                const detailButton = `
+                    <a class="btn btn-info btn-sm me-1 text-white" href="#" onclick="ShowDetailVente(${row.id})">
+                        <i class="fas fa-eye"></i>
+                    </a>
+                `;
+
+                if (isMagasinier.value) {
+                    return detailButton;
+                }
+
+                return `${detailButton}
+                    <a class="btn btn-danger btn-sm" href="#" onclick="DeleteVenteFunction(${row.id})">
+                        <i class="fas fa-trash"></i>
+                    </a>
+                `;
+            }
         }
     ])
 
@@ -726,6 +742,15 @@
     }
 
     window.DeleteVenteFunction = async function (id) {
+        if (isMagasinier.value) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Accès refusé',
+                text: 'Vous ne pouvez pas annuler une vente.',
+            })
+            return;
+        }
+
         Swal.fire({
             title: 'Annuler cette vente ?',
             text: 'Le stock sera restauré automatiquement.',
@@ -762,7 +787,8 @@
 
     // ─── Lifecycle ───────────────────────────────────────────────────────────────
 
-    onMounted(() => {
+    onMounted(async () => {
+        await loadCurrentUser()
         addmodal    = new bootstrap.Modal(document.getElementById('venteModal'))
         detailModal = new bootstrap.Modal(document.getElementById('detailModal'))
         AllVentesFunction()

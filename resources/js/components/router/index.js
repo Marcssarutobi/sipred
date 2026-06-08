@@ -28,7 +28,7 @@ const routes = [
             },
             {
                 path:'vente',
-                meta:{roles: ['admin', 'gerant']},
+                meta:{roles: ['admin', 'gerant', 'magasinier']},
                 component: () =>import('@/components/adminPage/pages/vente.vue')
             },
             {
@@ -87,7 +87,7 @@ router.beforeEach(async (to, from, next) => {
 
         if (auth && token) {
 
-            const role = auth.user?.role;
+            const role = auth?.role;
 
             // Vérifier si la route est restreinte à certains rôles
             if (to.meta.roles && !to.meta.roles.includes(role)) {

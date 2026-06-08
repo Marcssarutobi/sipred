@@ -18,7 +18,7 @@
         <div class="card">
           <div class="card-header d-flex flex-wrap align-items-center justify-content-between gap-3">
               <div></div>
-              <button @click="showModal" class="btn btn-sm btn-primary-600"><i class="ri-add-line"></i> Ajouter un Produits</button>
+              <button v-if="!isMagasinier" @click="showModal" class="btn btn-sm btn-primary-600"><i class="ri-add-line"></i> Ajouter un Produits</button>
           </div>
           <div class="card-body">
               <DataTable :data="allProduct" :columns="columns" />
@@ -223,8 +223,9 @@
 
     import Swal from 'sweetalert2';
     import DataTable from '../DataTable/Datatable.vue';
-    import { onMounted, onUnmounted, ref } from 'vue';
+    import { onMounted, onUnmounted, ref, computed } from 'vue';
     import {postData, getData, getSingleData, putData, deleteData} from '../../plugins/api'
+    import { isAuthenticated } from '../../router';
 
     let addmodal;
     let cameraModal;
@@ -237,6 +238,13 @@
     const videoRef      = ref(null)
     const canvasRef     = ref(null)
     const isScanning    = ref(false)
+    const currentUser   = ref(null)
+    const isMagasinier  = computed(() => currentUser.value?.role === 'magasinier')
+    const isGerant      = computed(() => currentUser.value?.role === 'gerant')
+
+    async function loadCurrentUser() {
+      currentUser.value = await isAuthenticated()
+    }
 
     const data = ref({
         id:'',
@@ -516,10 +524,18 @@
                 title: 'Action',
                 data: null,
                 render: (data, type, row) => {
-                    return `
+                    if (isMagasinier.value) {
+                        return `<span class="text-muted">Aucune action</span>`;
+                    }
+                    const editButton = `
                         <a class="btn btn-primary btn-sm me-1" href="#" onclick="ShowProductFunction(${row.id})">
                             <i class="fas fa-edit"></i>
                         </a>
+                    `;
+                    if (isGerant.value) {
+                        return editButton;
+                    }
+                    return `${editButton}
                         <a class="btn btn-danger btn-sm" href="#" onclick="DeleteProductFunction(${row.id})">
                             <i class="fas fa-trash"></i>
                         </a>
@@ -610,6 +626,15 @@
     }
 
     window.DeleteProductFunction = async function (id) {
+        if (isMagasinier.value || isGerant.value) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Accès refusé',
+                text: 'Vous ne pouvez pas supprimer de produit.',
+            })
+            return;
+        }
+
         Swal.fire({
             title: "Voulez-vous supprimez ce produits ?",
             text: "Vous ne pouvez plus revenir en arrière",
@@ -638,7 +663,8 @@
         })
     }
 
-    onMounted(()=>{
+    onMounted(async ()=>{
+        await loadCurrentUser()
         addmodal = new bootstrap.Modal(document.getElementById('productModal'));
         cameraModal = new bootstrap.Modal(document.getElementById('cameraModal'));
         AllProductFunction()

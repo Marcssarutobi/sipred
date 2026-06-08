@@ -107,6 +107,10 @@ class VenteController extends Controller
 
     public function destroy(Vente $vente)
     {
+        if (auth()->user()?->isMagasinier()) {
+            return response()->json(['message' => 'Accès refusé.'], 403);
+        }
+
         DB::beginTransaction();
 
         try {
