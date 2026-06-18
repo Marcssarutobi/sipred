@@ -169,6 +169,24 @@
                                 </div>
                             </div>
 
+                            <!-- Fournisseur -->
+                            <div class="col-lg-6">
+                                <label class="form-label">Fournisseur</label>
+                                <select
+                                    v-model="data.fournisseur_id"
+                                    :class="isEmpty.fournisseur_id ? 'is-invalid' : ''"
+                                    class="form-select"
+                                >
+                                    <option value="" disabled>-- Choisir un fournisseur --</option>
+                                    <option v-for="four in allFournisseur" :key="four.id" :value="four.id">
+                                        {{ four.nom }}
+                                    </option>
+                                </select>
+                                <div v-if="isEmpty.fournisseur_id" class="invalid-feedback">
+                                    {{ msgInput.fournisseur_id }}
+                                </div>
+                            </div>
+
                             <!-- Date Expiration -->
                             <div class="col-lg-6">
                                 <label class="form-label">Date d'expiration <span class="text-muted">(optionnel)</span></label>
@@ -256,6 +274,7 @@
         seuil_alerte:'',
         date_expiration:'',
         category_id:'',
+        fournisseur_id:''
     })
 
     const isEmpty = ref({})
@@ -267,6 +286,7 @@
     const modalbutton = ref('')
     const allProduct = ref([])
     const categories = ref([])
+    const allFournisseur = ref([])
 
     // ─── Scanner USB / Bluetooth ─────────────────────────────────────────────────
     // Les scanners de code barre envoient les caractères très rapidement
@@ -400,15 +420,16 @@
     function showModal(){
         addmodal.show();
         data.value = {
-        id:'',
-        code_barre:'',
-        nom:'',
-        prix_unitaire:'',
-        prix_achat:'',
-        quantite:'',
-        seuil_alerte:'',
-        date_expiration:'',
-        category_id:'',
+            id:'',
+            code_barre:'',
+            nom:'',
+            prix_unitaire:'',
+            prix_achat:'',
+            quantite:'',
+            seuil_alerte:'',
+            date_expiration:'',
+            category_id:'',
+            fournisseur_id:''
         }
         modalTitle.value = 'Ajouter un produits'
         modalbutton.value = 'Enrégistrer'
@@ -429,6 +450,14 @@
         await getData('/categories').then(res=>{
             if (res.status === 200) {
                 categories.value = res.data
+            }
+        })
+    }
+
+    async function AllFournisseurFunction() {
+        await getData('/fournisseurs').then(res=>{
+            if (res.status === 200) {
+                allFournisseur.value = res.data
             }
         })
     }
@@ -454,6 +483,13 @@
                 data: 'category',
                 render: (data, type, row) => {
                     return row.category ? row.category.name : '-';
+                }
+            },
+            {
+                title: 'Fournisseur',
+                data: 'fournisseur',
+                render: (data, type, row) => {
+                    return row.fournisseur ? row.fournisseur.nom : '-';
                 }
             },
             {
@@ -570,6 +606,7 @@
                         seuil_alerte:'',
                         date_expiration:'',
                         category_id:'',
+                        fournisseur_id:''
                     }
                     Swal.fire({
                         icon: 'success',
@@ -611,6 +648,7 @@
                     seuil_alerte:'',
                     date_expiration:'',
                     category_id:'',
+                    fournisseur_id:''
                 }
                 isEdite.value = false
                 Swal.fire({
@@ -669,6 +707,7 @@
         cameraModal = new bootstrap.Modal(document.getElementById('cameraModal'));
         AllProductFunction()
         AllCategoryFunction()
+        AllFournisseurFunction()
 
         // Écoute globale du scanner USB/Bluetooth
         window.addEventListener('keydown', onGlobalKeydown)

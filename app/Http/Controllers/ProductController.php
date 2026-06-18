@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Storage;
 class ProductController extends Controller
 {
     public function index(Request $request){
-        $query = Product::with('category', 'user');
+        $query = Product::with('category', 'user','fournisseur');
         $products = $query->latest()->get();
         return response()->json($products);
     }
@@ -28,6 +28,7 @@ class ProductController extends Controller
             'prix_achat'      => 'required|numeric|min:0',
             'quantite'        => 'required|integer|min:0',
             'seuil_alerte'    => 'required|integer|min:0',
+            'fournisseur_id'  => 'required|exists:fournisseurs,id',
             'date_expiration' => 'nullable|date',
             'image'           => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'category_id'     => 'required|exists:categories,id',
@@ -41,7 +42,7 @@ class ProductController extends Controller
         $validated['user_id'] = auth()->id();
 
         $product = Product::create($validated);
-        $product->load('category', 'user');
+        $product->load('category', 'user','fournisseur');
 
         return response()->json($product, 200);
     }
@@ -65,6 +66,7 @@ class ProductController extends Controller
             'prix_achat'      => 'required|numeric|min:0',
             'quantite'        => 'required|integer|min:0',
             'seuil_alerte'    => 'required|integer|min:0',
+            'fournisseur_id'  => 'required|exists:fournisseurs,id',
             'date_expiration' => 'nullable|date',
             'image'           => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'category_id'     => 'required|exists:categories,id',
@@ -79,7 +81,7 @@ class ProductController extends Controller
         }
 
         $product->update($validated);
-        $product->load('category', 'user');
+        $product->load('category', 'user','fournisseur');
 
         return response()->json($product);
     }

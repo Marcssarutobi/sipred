@@ -9,7 +9,7 @@ class Product extends Model
     protected $fillable = [
         'code_barre', 'nom', 'prix_unitaire', 'prix_achat',
         'quantite', 'seuil_alerte', 'date_expiration',
-        'image', 'category_id', 'user_id'
+        'image', 'category_id', 'user_id','fournisseur_id'
     ];
 
     protected $casts = [
@@ -58,5 +58,10 @@ class Product extends Model
     public function enRupture(): bool
     {
         return $this->quantite === 0;
+    }
+
+    public function fournisseur()
+    {
+        return $this->belongsTo(Fournisseur::class);
     }
 }

@@ -15,4 +15,9 @@ class Fournisseur extends Model
     {
         return $this->hasMany(Aprovisionnement::class);
     }
+
+    public function products()
+    {
+        return $this->hasMany(Product::class);
+    }
 }

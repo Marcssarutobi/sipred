@@ -40,6 +40,7 @@ class AnalyseProduitsPlusVendusJob implements ShouldQueue
                     'products.quantite as stock_actuel',
                     'products.seuil_alerte',
                     'products.prix_achat',
+                    'products.fournisseur_id', // ← ajouté
                     DB::raw('SUM(vente_items.quantite) as total_quantite_vendue'),
                     DB::raw('SUM(vente_items.prix_total) as total_chiffre_affaires'),
                     DB::raw('COUNT(DISTINCT ventes.id) as nombre_ventes'),
@@ -52,7 +53,8 @@ class AnalyseProduitsPlusVendusJob implements ShouldQueue
                     'products.code_barre',
                     'products.quantite',
                     'products.seuil_alerte',
-                    'products.prix_achat'
+                    'products.prix_achat',
+                    'products.fournisseur_id'
                 )
                 ->orderByDesc('total_quantite_vendue')
                 ->limit(10)
@@ -92,6 +94,7 @@ class AnalyseProduitsPlusVendusJob implements ShouldQueue
                 'quantite as stock_actuel',
                 'seuil_alerte',
                 'prix_achat',
+                'fournisseur_id',
                 DB::raw('0 as total_quantite_vendue'),
                 DB::raw('0 as total_chiffre_affaires'),
                 DB::raw('0 as nombre_ventes'),
@@ -106,7 +109,7 @@ class AnalyseProduitsPlusVendusJob implements ShouldQueue
 
     private function creerBonDeCommande(object $row): void
     {
-        // ── A. Trouver le dernier fournisseur utilisé pour ce produit ──────
+        // ── A. Trouver le fournisseur : priorité au dernier appro, sinon fournisseur par défaut du produit ──
         $dernierAppro = DB::table('aprovisionnement_items')
             ->join('aprovisionnements', 'aprovisionnement_items.aprovisionnement_id', '=', 'aprovisionnements.id')
             ->where('aprovisionnement_items.product_id', $row->product_id)
@@ -114,12 +117,12 @@ class AnalyseProduitsPlusVendusJob implements ShouldQueue
             ->select('aprovisionnements.fournisseur_id')
             ->first();
 
-        // Pas de fournisseur connu → on ne peut pas créer le bon
-        if (!$dernierAppro) {
+        $fournisseurId = $dernierAppro->fournisseur_id ?? $row->fournisseur_id ?? null;
+
+        // Toujours aucun fournisseur connu (ni historique, ni défaut produit) → on ne peut pas créer le bon
+        if (!$fournisseurId) {
             return;
         }
-
-        $fournisseurId = $dernierAppro->fournisseur_id;
 
         // ── B. Anti-doublon : bon enAttente existant pour ce produit ───────
         $dejaEnAttente = DB::table('aprovisionnement_items')
@@ -133,7 +136,6 @@ class AnalyseProduitsPlusVendusJob implements ShouldQueue
         }
 
         // ── C. Calcul de la quantité à commander ───────────────────────────
-        // On commande la moyenne mensuelle de la saison (au moins 1 unité)
         $quantiteACommander = max(1, (int) $row->moyenne_mensuelle);
         $prixTotal          = $quantiteACommander * $row->prix_achat;
 
@@ -147,7 +149,7 @@ class AnalyseProduitsPlusVendusJob implements ShouldQueue
                 'fournisseur_id'        => $fournisseurId,
                 'montant_total'         => $prixTotal,
                 'date_approvisionnement'=> now(),
-                'user_id'              => 1, // ⚠️ à remplacer par l'id d'un user système
+                'user_id'              => 1,
                 'status'               => 'enAttente',
                 'created_at'           => now(),
                 'updated_at'           => now(),
